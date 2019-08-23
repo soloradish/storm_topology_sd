@@ -24,6 +24,7 @@ use crate::storm_client::{StormRestClient, TopologyWorkers};
 // Create a new scheduler
 fn main() {
     let matches = App::new("Storm Topology SD for Prometheus")
+        .version("0.1.0")
         .arg(
             Arg::with_name("storm_ui_url")
                 .short("t")

@@ -1,0 +1,68 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: lowid/rust-build-musl-openssl
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: storm-sd-cache
+      - run:
+          name: Stable Build
+          command: |
+            rustup run stable rustc --version --verbose
+            rustup run stable cargo --version --verbose
+            rustup run stable cargo build --release --target x86_64-unknown-linux-musl --features vendored
+
+      - run:
+          name: move
+          command: |
+            mkdir ./artifacts
+            cp ./target/x86_64-unknown-linux-musl/release/storm_sd ./artifacts/storm_sd_linux_x64
+
+      - store_artifacts:
+          path: "./artifacts"
+
+      - persist_to_workspace:
+          root: "./artifacts"
+          paths:
+            - "storm_sd_linux_x64"
+
+      - save_cache:
+          key: storm-sd-cache
+          paths:
+            - "~/.cargo"
+            - "./target"
+
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+          at: ./artifacts
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            ls ./
+            ls ./artifacts
+            VERSION=$(./artifacts/storm_sd_linux_x64 --version | awk '{print $NF}')
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - publish-github-release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+
