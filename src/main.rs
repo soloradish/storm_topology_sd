@@ -81,12 +81,11 @@ fn main() {
         2 | _ => LevelFilter::Debug,
     };
 
-    CombinedLogger::init(vec![TermLogger::new(
+    CombinedLogger::init(vec![SimpleLogger::new(
         log_level_filter,
         Config::default(),
-        TerminalMode::Mixed,
     )
-    .unwrap()])
+    ])
     .unwrap();
 
     debug!("Starting storm_sd service...");
