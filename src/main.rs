@@ -84,7 +84,7 @@ fn main() {
     CombinedLogger::init(vec![TermLogger::new(
         log_level_filter,
         Config::default(),
-        TerminalMode::Mixed,
+        TerminalMode::Stdout,
     )
     .unwrap()])
     .unwrap();
